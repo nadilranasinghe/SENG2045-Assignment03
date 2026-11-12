@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Category, Post, Comment, Profile
+from .models import Category, Post, Comment, Profile, PostImage
 
 
 @admin.register(Category)
@@ -24,3 +24,15 @@ class CommentAdmin(admin.ModelAdmin):
 class ProfileAdmin(admin.ModelAdmin):
     list_display = ("id", "user", "bio")
     search_fields = ("user__username", "bio")
+    
+
+@admin.register(PostImage)
+class PostImageAdmin(admin.ModelAdmin):
+    """
+    Admin configuration for uploaded forum post images.
+    """
+
+    list_display = ("id", "post", "uploaded_at")
+    list_filter = ("uploaded_at",)
+    search_fields = ("post__title",)
+    readonly_fields = ("uploaded_at",)

@@ -5,6 +5,9 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.shortcuts import get_object_or_404
 from .forms import PostForm
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_image_file_extension
+from .models import PostImage
 
 
 def home(request):
@@ -48,6 +51,14 @@ def get_posts(request):
             "id": post.id,
             "title": post.title,
             "content": post.content,
+            "images": [
+            {
+                "id": image.id,
+                "url": image.image.url
+            }
+            for image in post.images.all()
+            ],
+
             "author": post.author.username,
             "is_owner": (
                 request.user.is_authenticated
@@ -197,3 +208,71 @@ def delete_post(request, post_id):
         "post_id": post_id,
         "message": "Post deleted successfully."
     }, status=200)
+
+
+
+@login_required
+@require_POST
+def upload_post_image(request, post_id):
+    """
+    Upload an image to a forum post using AJAX.
+    Only the post author can upload images.
+    """
+
+    post = get_object_or_404(Post, id=post_id)
+
+    # Verify ownership of the post.
+    if post.author_id != request.user.id:
+        return JsonResponse({
+            "success": False,
+            "error": "You cannot upload images to this post."
+        }, status=403)
+
+    # Check whether a file was provided.
+    image_file = request.FILES.get("file")
+
+    if not image_file:
+        return JsonResponse({
+            "success": False,
+            "error": "No image file was uploaded."
+        }, status=400)
+
+    # Restrict the maximum file size to 5 MB.
+    if image_file.size > 5 * 1024 * 1024:
+        return JsonResponse({
+            "success": False,
+            "error": "Image must be smaller than 5 MB."
+        }, status=400)
+
+    # Validate the image file extension and contents.
+    try:
+        validate_image_file_extension(image_file)
+
+        from django.forms import ImageField
+        ImageField().clean(image_file)
+
+    except ValidationError:
+        return JsonResponse({
+            "success": False,
+            "error": "Please upload a valid JPEG, PNG, GIF, or WebP image."
+        }, status=400)
+
+    # Restrict accepted image formats.
+    if image_file.image.format not in ("JPEG", "PNG", "GIF", "WEBP"):
+        return JsonResponse({
+            "success": False,
+            "error": "Unsupported image format."
+        }, status=400)
+
+    # Save the uploaded image.
+    post_image = PostImage.objects.create(
+        post=post,
+        image=image_file
+    )
+
+    return JsonResponse({
+        "success": True,
+        "image_id": post_image.id,
+        "image_url": post_image.image.url,
+        "message": "Image uploaded successfully."
+    }, status=201)

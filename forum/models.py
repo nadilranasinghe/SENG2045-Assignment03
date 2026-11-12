@@ -67,3 +67,27 @@ class Profile(models.Model):
 
     def __str__(self):
         return f"{self.user.username}'s Profile"
+    
+
+class PostImage(models.Model):
+    """
+    Stores an image uploaded for a forum post.
+    Each post can have multiple images.
+    """
+
+    post = models.ForeignKey(
+        Post,
+        on_delete=models.CASCADE,
+        related_name="images"
+    )
+
+    image = models.ImageField(
+        upload_to="post_images/"
+    )
+
+    uploaded_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    def __str__(self):
+        return f"Image for post {self.post.id}"

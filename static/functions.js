@@ -144,6 +144,35 @@ async function loadPosts() {
                 likeButton
             );
 
+
+            // Display uploaded images for this post.
+            if (post.images && post.images.length > 0) {
+
+                const imageContainer = document.createElement("div");
+                imageContainer.className = "d-flex flex-wrap gap-2 mt-3";
+
+                post.images.forEach(function (image) {
+
+                    const img = document.createElement("img");
+
+                    img.src = image.url;
+                    img.alt = "Uploaded image for " + post.title;
+
+                    img.className = "img-thumbnail";
+
+                    img.style.width = "120px";
+                    img.style.height = "120px";
+                    img.style.objectFit = "cover";
+
+                    // Add the image to the container.
+                    imageContainer.appendChild(img);
+                });
+
+                // Add images to the post card.
+                body.appendChild(imageContainer);
+            }
+
+
             // Create an Edit button for posts owned by the current user.
 
             // Show Edit and Delete buttons only to the post owner.
@@ -200,6 +229,34 @@ async function loadPosts() {
                 });
 
                 body.appendChild(deleteButton);
+
+
+                // Create Upload Images button.
+                const uploadButton = document.createElement("button");
+
+                uploadButton.className = "btn btn-success btn-sm mt-3 ms-2";
+                uploadButton.textContent = "Upload Images";
+                uploadButton.type = "button";
+
+                uploadButton.addEventListener("click", function () {
+
+                    // Store the ID of the post receiving images.
+                    document.getElementById("uploadImagePostId").value = post.id;
+
+                    // Clear previous upload errors.
+                    const uploadError = document.getElementById("uploadImageError");
+                    uploadError.classList.add("d-none");
+                    uploadError.textContent = "";
+
+                    // Open the Upload Images modal.
+                    const modalElement = document.getElementById("uploadImageModal");
+                    const modal = new bootstrap.Modal(modalElement);
+                    modal.show();
+                });
+
+                // Add the Upload Images button to the post card.
+                body.appendChild(uploadButton);
+
             }
 
 
@@ -487,5 +544,120 @@ document.addEventListener("DOMContentLoaded", function () {
         } finally {
             confirmDeleteButton.disabled = false;
         }
+    });
+});
+
+
+/**
+ * Configures Dropzone.js to upload images to existing forum posts.
+ * Uses Django CSRF protection and the selected post ID.
+ */
+document.addEventListener("DOMContentLoaded", function () {
+
+    const dropzoneForm = document.getElementById("postImageDropzone");
+    const uploadError = document.getElementById("uploadImageError");
+
+    if (!dropzoneForm) {
+        return;
+    }
+
+    // Prevent Dropzone from automatically attaching twice.
+    Dropzone.autoDiscover = false;
+
+    const imageDropzone = new Dropzone("#postImageDropzone", {
+
+        // The URL is set dynamically when an image is uploaded.
+        url: "/api/posts/0/upload-image/",
+
+        method: "post",
+        paramName: "file",
+
+        // Upload one image per request.
+        uploadMultiple: false,
+        parallelUploads: 1,
+
+        // Limit each image to 5 MB.
+        maxFilesize: 5,
+
+        // Accept supported image formats.
+        acceptedFiles: "image/jpeg,image/png,image/gif,image/webp",
+
+        addRemoveLinks: true,
+
+        // Do not upload until the post ID has been selected.
+        autoProcessQueue: false,
+
+        init: function () {
+
+            const dz = this;
+
+            // Start uploading when an image is added.
+            dz.on("addedfile", function (file) {
+
+                uploadError.classList.add("d-none");
+                uploadError.textContent = "";
+
+                const postId = document.getElementById(
+                    "uploadImagePostId"
+                ).value;
+
+                if (!postId) {
+                    uploadError.textContent = "Please select a post first.";
+                    uploadError.classList.remove("d-none");
+                    dz.removeFile(file);
+                    return;
+                }
+
+                dz.processQueue();
+            });
+
+            // Set the correct post URL and CSRF token before each upload.
+            dz.on("processing", function () {
+
+                const postId = document.getElementById(
+                    "uploadImagePostId"
+                ).value;
+
+                dz.options.url = `/api/posts/${postId}/upload-image/`;
+            });
+
+            dz.on("sending", function (file, xhr, formData) {
+
+                const csrfToken = dropzoneForm.querySelector(
+                    '[name="csrfmiddlewaretoken"]'
+                ).value;
+
+                xhr.setRequestHeader("X-CSRFToken", csrfToken);
+            });
+
+            // Handle successful uploads.
+            dz.on("success", function (file, response) {
+
+                if (response.success) {
+                    console.log("Image uploaded:", response.image_url);
+                }
+            });
+
+            // Display upload errors.
+            dz.on("error", function (file, errorMessage) {
+
+                const message = typeof errorMessage === "string"
+                    ? errorMessage
+                    : errorMessage.error || "Image upload failed.";
+
+                uploadError.textContent = message;
+                uploadError.classList.remove("d-none");
+            });
+        }
+    });
+
+    // Clear previous uploads when the modal closes.
+    const uploadModal = document.getElementById("uploadImageModal");
+
+    uploadModal.addEventListener("hidden.bs.modal", function () {
+        imageDropzone.removeAllFiles(true);
+        document.getElementById("uploadImagePostId").value = "";
+        uploadError.classList.add("d-none");
+        uploadError.textContent = "";
     });
 });

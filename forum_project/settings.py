@@ -136,4 +136,9 @@ MAILERS = {
 
 # Uploaded media files
 MEDIA_URL = "media/"
+
+# Directory where uploaded images will be stored.
 MEDIA_ROOT = BASE_DIR / "media"
+
+
+

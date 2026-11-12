@@ -218,6 +218,65 @@
 </div>
 
 
+<!-- Upload Post Images Modal -->
+<div class="modal fade" id="uploadImageModal" tabindex="-1"
+     aria-labelledby="uploadImageModalLabel" aria-hidden="true">
+
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="uploadImageModalLabel">
+                    Upload Post Images
+                </h5>
+
+                <button type="button" class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+
+                <p class="text-muted">
+                    Drag and drop images below, or click to select files.
+                    Maximum file size: 5 MB per image.
+                </p>
+
+                <!-- Store the selected post ID -->
+                <input type="hidden" id="uploadImagePostId">
+
+                <!-- Dropzone drag-and-drop upload area -->
+                <form id="postImageDropzone"
+                      class="dropzone border rounded p-3"
+                      method="post"
+                      enctype="multipart/form-data">
+
+                    {% csrf_token %}
+
+                    <div class="dz-message">
+                        Drop images here or click to upload.
+                    </div>
+
+                </form>
+
+                <!-- Upload error messages -->
+                <div id="uploadImageError"
+                     class="alert alert-danger d-none mt-3"></div>
+
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+                    Close
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
 
 
 </div>
