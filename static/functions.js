@@ -143,6 +143,32 @@ async function loadPosts() {
                 date,
                 likeButton
             );
+
+            // Create an Edit button for posts owned by the current user.
+            if (post.is_owner) {
+                const editButton = document.createElement("button");
+                editButton.type = "button";
+                editButton.className = "btn btn-outline-secondary btn-sm mt-3 ms-2";
+                editButton.textContent = "Edit Post";
+
+                editButton.addEventListener("click", function () {
+                    // Fill the Edit Post modal with the existing post data.
+                    document.getElementById("editPostId").value = post.id;
+                    document.getElementById("editPostTitle").value = post.title;
+                    document.getElementById("editPostContent").value = post.content;
+                    document.getElementById("editPostCategory").value = post.category_id;
+
+                    document.getElementById("editPostError").classList.add("d-none");
+
+                    // Open the Bootstrap modal.
+                    const modalElement = document.getElementById("editPostModal");
+                    const modal = new bootstrap.Modal(modalElement);
+                    modal.show();
+                });
+
+                body.appendChild(editButton);
+            }
+
             card.appendChild(body);
             column.appendChild(card);
             container.appendChild(column);
@@ -250,6 +276,94 @@ document.addEventListener("DOMContentLoaded", () => {
         } catch (error) {
             createPostError.textContent = error.message;
             createPostError.classList.remove("d-none");
+        } finally {
+            submitButton.disabled = false;
+        }
+    });
+});
+
+
+/**
+ * Handles AJAX submission of the Edit Post modal.
+ * Updates an existing post without refreshing the page.
+ */
+document.addEventListener("DOMContentLoaded", () => {
+    const editPostForm = document.getElementById("editPostForm");
+    const editPostError = document.getElementById("editPostError");
+
+    if (!editPostForm) {
+        return;
+    }
+
+    editPostForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const postId = document.getElementById("editPostId").value;
+        const submitButton = editPostForm.querySelector(
+            'button[type="submit"]'
+        );
+
+        const csrfToken = editPostForm.querySelector(
+            '[name="csrfmiddlewaretoken"]'
+        ).value;
+
+        editPostError.classList.add("d-none");
+        submitButton.disabled = true;
+
+        try {
+            const response = await fetch(
+                `/api/posts/${postId}/update/`,
+                {
+                    method: "POST",
+                    headers: {
+                        "X-CSRFToken": csrfToken
+                    },
+                    body: new FormData(editPostForm),
+                    credentials: "same-origin"
+                }
+            );
+
+            if (response.redirected) {
+                window.location.href = response.url;
+                return;
+            }
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                const errors = data.errors
+                    ? Object.values(data.errors)
+                        .flat()
+                        .map(error => error.message)
+                        .join(" ")
+                    : data.error || "Unable to update post.";
+
+                throw new Error(errors);
+            }
+
+            // Close the Edit Post modal.
+            const modalElement = document.getElementById(
+                "editPostModal"
+            );
+
+            const modal = bootstrap.Modal.getInstance(modalElement);
+
+            if (modal) {
+                modal.hide();
+            }
+
+            // Reset pagination and refresh posts through AJAX.
+            currentPage = 1;
+
+            document.getElementById(
+                "posts-container"
+            ).replaceChildren();
+
+            await loadPosts();
+
+        } catch (error) {
+            editPostError.textContent = error.message;
+            editPostError.classList.remove("d-none");
         } finally {
             submitButton.disabled = false;
         }

@@ -49,6 +49,11 @@ def get_posts(request):
             "title": post.title,
             "content": post.content,
             "author": post.author.username,
+            "is_owner": (
+                request.user.is_authenticated
+                and post.author_id == request.user.id
+            ),
+            "category_id": post.category_id,
             "category": post.category.name,
             "created_at": post.created_at.strftime(
                 "%Y-%m-%d %H:%M"
@@ -89,6 +94,7 @@ def toggle_like(request, post_id):
     
 @login_required
 @require_POST
+
 def create_post(request):
     form = PostForm(request.POST)
 
@@ -124,3 +130,42 @@ def post_detail(request, post_id):
     }
 
     return render(request, "post_detail.html", context)
+
+
+@login_required
+@require_POST
+
+def update_post(request, post_id):
+    """
+    Updates an existing forum post using AJAX.
+    Only the post author can update their post.
+    """
+
+    post = get_object_or_404(Post, id=post_id)
+
+    # Prevent users from editing someone else's posts.
+    if post.author != request.user:
+        return JsonResponse({
+            "success": False,
+            "error": "You do not have permission to edit this post."
+        }, status=403)
+
+    # Validate submitted data against the existing post.
+    form = PostForm(request.POST, instance=post)
+
+    if form.is_valid():
+        updated_post = form.save()
+
+        return JsonResponse({
+            "success": True,
+            "post_id": updated_post.id,
+            "title": updated_post.title,
+            "content": updated_post.content,
+            "category": updated_post.category.name,
+            "message": "Post updated successfully."
+        })
+
+    return JsonResponse({
+        "success": False,
+        "errors": form.errors.get_json_data()
+    }, status=400)
