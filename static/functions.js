@@ -145,29 +145,63 @@ async function loadPosts() {
             );
 
             // Create an Edit button for posts owned by the current user.
+
+            // Show Edit and Delete buttons only to the post owner.
             if (post.is_owner) {
+
+                // Create Edit Post button.
                 const editButton = document.createElement("button");
-                editButton.type = "button";
-                editButton.className = "btn btn-outline-secondary btn-sm mt-3 ms-2";
+                editButton.className = "btn btn-warning btn-sm mt-3 ms-2";
                 editButton.textContent = "Edit Post";
+                editButton.type = "button";
 
                 editButton.addEventListener("click", function () {
-                    // Fill the Edit Post modal with the existing post data.
+
+                    // Fill the Edit Post form with existing post data.
                     document.getElementById("editPostId").value = post.id;
                     document.getElementById("editPostTitle").value = post.title;
                     document.getElementById("editPostContent").value = post.content;
                     document.getElementById("editPostCategory").value = post.category_id;
 
-                    document.getElementById("editPostError").classList.add("d-none");
+                    // Clear previous validation errors.
+                    const editError = document.getElementById("editPostError");
+                    editError.classList.add("d-none");
+                    editError.textContent = "";
 
-                    // Open the Bootstrap modal.
+                    // Open the Edit Post modal.
                     const modalElement = document.getElementById("editPostModal");
                     const modal = new bootstrap.Modal(modalElement);
                     modal.show();
                 });
 
                 body.appendChild(editButton);
+
+
+                // Create Delete Post button.
+                const deleteButton = document.createElement("button");
+                deleteButton.className = "btn btn-danger btn-sm mt-3 ms-2";
+                deleteButton.textContent = "Delete Post";
+                deleteButton.type = "button";
+
+                deleteButton.addEventListener("click", function () {
+
+                    // Store the ID of the post selected for deletion.
+                    document.getElementById("deletePostId").value = post.id;
+
+                    // Clear previous error messages.
+                    const deleteError = document.getElementById("deletePostError");
+                    deleteError.classList.add("d-none");
+                    deleteError.textContent = "";
+
+                    // Open the Delete Post confirmation modal.
+                    const modalElement = document.getElementById("deletePostModal");
+                    const modal = new bootstrap.Modal(modalElement);
+                    modal.show();
+                });
+
+                body.appendChild(deleteButton);
             }
+
 
             card.appendChild(body);
             column.appendChild(card);
@@ -366,6 +400,92 @@ document.addEventListener("DOMContentLoaded", () => {
             editPostError.classList.remove("d-none");
         } finally {
             submitButton.disabled = false;
+        }
+    });
+});
+
+
+/**
+ * Handles AJAX deletion of forum posts.
+ * Only the post owner can delete a post.
+ * Refreshes the post list without reloading the page.
+ */
+document.addEventListener("DOMContentLoaded", function () {
+
+    const confirmDeleteButton = document.getElementById("confirmDeletePost");
+    const deletePostError = document.getElementById("deletePostError");
+
+    if (!confirmDeleteButton) {
+        return;
+    }
+
+    confirmDeleteButton.addEventListener("click", async function () {
+
+        // Get the ID of the selected post.
+        const postId = document.getElementById("deletePostId").value;
+
+        // Get Django's CSRF token from the existing form.
+        const csrfToken = document.querySelector(
+            "#csrf-form input[name='csrfmiddlewaretoken']"
+        ).value;
+
+        // Hide previous errors and prevent duplicate submissions.
+        deletePostError.classList.add("d-none");
+        deletePostError.textContent = "";
+        confirmDeleteButton.disabled = true;
+
+        try {
+            // Send the delete request to Django.
+            const response = await fetch(
+                `/api/posts/${postId}/delete/`,
+                {
+                    method: "POST",
+                    headers: {
+                        "X-CSRFToken": csrfToken
+                    },
+                    credentials: "same-origin"
+                }
+            );
+
+            // Redirect to login if the session has expired.
+            if (response.redirected) {
+                window.location.href = response.url;
+                return;
+            }
+
+            const data = await response.json();
+
+            // Handle permission errors and unsuccessful requests.
+            if (!response.ok || !data.success) {
+                throw new Error(
+                    data.error || "Unable to delete this post."
+                );
+            }
+
+            // Close the confirmation modal.
+            const modalElement = document.getElementById("deletePostModal");
+            const modal = bootstrap.Modal.getInstance(modalElement);
+
+            if (modal) {
+                modal.hide();
+            }
+
+            // Reset pagination and refresh posts using AJAX.
+            currentPage = 1;
+
+            document.getElementById(
+                "posts-container"
+            ).replaceChildren();
+
+            await loadPosts();
+
+        } catch (error) {
+            // Display errors inside the confirmation modal.
+            deletePostError.textContent = error.message;
+            deletePostError.classList.remove("d-none");
+
+        } finally {
+            confirmDeleteButton.disabled = false;
         }
     });
 });

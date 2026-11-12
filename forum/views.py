@@ -169,3 +169,31 @@ def update_post(request, post_id):
         "success": False,
         "errors": form.errors.get_json_data()
     }, status=400)
+
+
+@login_required
+@require_POST
+
+def delete_post(request, post_id):
+    """
+    Deletes an existing forum post using AJAX.
+    Only the original author can delete the post.
+    """
+
+    post = get_object_or_404(Post, id=post_id)
+
+    # Check whether the logged-in user owns this post.
+    if post.author_id != request.user.id:
+        return JsonResponse({
+            "success": False,
+            "error": "You do not have permission to delete this post."
+        }, status=403)
+
+    # Delete the post from the database.
+    post.delete()
+
+    return JsonResponse({
+        "success": True,
+        "post_id": post_id,
+        "message": "Post deleted successfully."
+    }, status=200)

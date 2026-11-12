@@ -12,4 +12,5 @@ urlpatterns = [
     path("api/posts/create/", views.create_post, name="create_post"),
     path("posts/<int:post_id>/", views.post_detail, name="post_detail"),
     path("api/posts/<int:post_id>/update/", views.update_post, name="update_post"),
+    path("api/posts/<int:post_id>/delete/", views.delete_post, name="delete_post"),
 ]
