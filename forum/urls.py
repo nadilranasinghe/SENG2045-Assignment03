@@ -10,4 +10,5 @@ urlpatterns = [
         name="toggle_like"
     ),
     path("api/posts/create/", views.create_post, name="create_post"),
+    path("posts/<int:post_id>/", views.post_detail, name="post_detail"),
 ]

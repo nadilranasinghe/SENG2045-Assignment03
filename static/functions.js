@@ -51,9 +51,18 @@ async function loadPosts() {
             const body = document.createElement("div");
             body.className = "card-body";
 
+
+            // Create a clickable post title.
             const title = document.createElement("h5");
             title.className = "card-title";
-            title.textContent = post.title;
+
+            const titleLink = document.createElement("a");
+            titleLink.href = `/posts/${post.id}/`;
+            titleLink.textContent = post.title;
+            titleLink.className = "text-decoration-none";
+
+            title.appendChild(titleLink);
+
 
             const content = document.createElement("p");
             content.className = "card-text";

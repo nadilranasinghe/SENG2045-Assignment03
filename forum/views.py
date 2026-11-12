@@ -107,3 +107,20 @@ def create_post(request):
         "success": False,
         "errors": form.errors.get_json_data()
     }, status=400)
+
+
+def post_detail(request, post_id):
+    """
+    Displays the details of an individual forum post.
+    """
+
+    post = get_object_or_404(
+        Post.objects.select_related("author", "category"),
+        id=post_id
+    )
+
+    context = {
+        "post": post
+    }
+
+    return render(request, "post_detail.html", context)
