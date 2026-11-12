@@ -1,6 +1,9 @@
 from django.shortcuts import render
 from .models import Post
 from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
+from django.shortcuts import get_object_or_404
 
 def home(request):
     posts = Post.objects.select_related(
@@ -44,10 +47,36 @@ def get_posts(request):
             "created_at": post.created_at.strftime(
                 "%Y-%m-%d %H:%M"
             ),
+            "likes_count": post.likes.count(),
+            "liked": (
+                request.user.is_authenticated
+                and post.likes.filter(id=request.user.id).exists()
+            ),
         })
 
     return JsonResponse({
         "posts": post_data,
         "page": page,
         "has_next": offset + page_size < total_posts
+    })
+    
+    
+@login_required
+@require_POST
+
+def toggle_like(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
+    user = request.user
+
+    if post.likes.filter(id=user.id).exists():
+        post.likes.remove(user)
+        liked = False
+    else:
+        post.likes.add(user)
+        liked = True
+
+    return JsonResponse({
+        "post_id": post.id,
+        "liked": liked,
+        "likes_count": post.likes.count()
     })

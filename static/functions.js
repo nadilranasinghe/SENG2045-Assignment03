@@ -71,7 +71,69 @@ async function loadPosts() {
             date.className = "text-muted";
             date.textContent = post.created_at;
 
-            body.append(title, content, author, category, date);
+            // Create Like/Unlike button
+            const likeButton = document.createElement("button");
+            likeButton.className = "btn btn-outline-primary btn-sm mt-3";
+
+            function updateLikeButton(liked, count) {
+                likeButton.textContent =
+                    `${liked ? "Unlike" : "Like"} (${count})`;
+            }
+
+            updateLikeButton(post.liked, post.likes_count);
+
+            likeButton.addEventListener("click", async function () {
+                likeButton.disabled = true;
+
+                try {
+                    const csrfToken = document.querySelector(
+                        "#csrf-form input[name='csrfmiddlewaretoken']"
+                    ).value;
+
+                    const response = await fetch(
+                        `/api/posts/${post.id}/like/`,
+                        {
+                            method: "POST",
+                            headers: {
+                                "X-CSRFToken": csrfToken
+                            },
+                            credentials: "same-origin"
+                        }
+                    );
+
+                    if (response.redirected) {
+                        alert("Please log in to like posts.");
+                        return;
+                    }
+
+                    if (!response.ok) {
+                        throw new Error("Unable to update like");
+                    }
+
+                    const result = await response.json();
+
+                    updateLikeButton(
+                        result.liked,
+                        result.likes_count
+                    );
+
+                } catch (error) {
+                    console.error("Like error:", error);
+                    alert("Unable to update like. Please try again.");
+
+                } finally {
+                    likeButton.disabled = false;
+                }
+            });
+
+            body.append(
+                title,
+                content,
+                author,
+                category,
+                date,
+                likeButton
+            );
             card.appendChild(body);
             column.appendChild(card);
             container.appendChild(column);

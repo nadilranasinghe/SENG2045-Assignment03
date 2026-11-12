@@ -4,6 +4,19 @@
 
 {% block content %}
 <div class="container mt-5">
+    {% if user.is_authenticated %}
+    <p class="text-success">
+        Logged in as {{ user.username }}
+    </p>
+    {% else %}
+    <p class="text-muted">
+        Log in to like posts.
+    </p>
+    {% endif %}
+
+    <form id="csrf-form" class="d-none">
+        {% csrf_token %}
+    </form>
 
     <h1>Django Forum</h1>
     <p>Welcome to SENG2045 Assignment 3</p>

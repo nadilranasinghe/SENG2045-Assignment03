@@ -4,4 +4,9 @@ from . import views
 urlpatterns = [
     path("", views.home, name="home"),
     path("api/posts/", views.get_posts, name="get_posts"),
+    path(
+        "api/posts/<int:post_id>/like/",
+        views.toggle_like,
+        name="toggle_like"
+    ),
 ]

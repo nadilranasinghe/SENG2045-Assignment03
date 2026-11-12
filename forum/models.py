@@ -26,6 +26,12 @@ class Post(models.Model):
 
     def __str__(self):
         return self.title
+    
+    likes = models.ManyToManyField(
+    User,
+    related_name="liked_posts",
+    blank=True
+)
 
 
 class Comment(models.Model):
