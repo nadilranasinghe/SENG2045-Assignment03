@@ -1,4 +1,3 @@
-
 {% extends "base.html" %}
 {% load static %}
 
@@ -30,24 +29,78 @@
         </div>
     </div>
 
+    <button type="button" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#createPostModal">
+        Create New Post
+    </button>
+
     <!-- JavaScript inserts post cards here -->
     <div id="posts-container" class="row"></div>
 
     <!-- Load More button -->
     <div class="text-center my-4">
-        <button
-            id="load-more-btn"
-            class="btn btn-primary d-none"
-            type="button">
+        <button id="load-more-btn" class="btn btn-primary d-none" type="button">
             Load More Posts
         </button>
     </div>
 
     <!-- Error message -->
-    <div id="posts-error" class="alert alert-danger d-none"
-         role="alert">
+    <div id="posts-error" class="alert alert-danger d-none" role="alert">
         Unable to load posts. Please try again.
     </div>
+
+
+    <!-- Create Post Modal -->
+    <div class="modal fade" id="createPostModal" tabindex="-1" aria-labelledby="createPostModalLabel"
+        aria-hidden="true">
+
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createPostModalLabel">
+                        Create New Post
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                    <form id="createPostForm">
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <label for="postTitle" class="form-label">Title</label>
+                            <input type="text" class="form-control" id="postTitle" name="title" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="postContent" class="form-label">Content</label>
+                            <textarea class="form-control" id="postContent" name="content" rows="4" required></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="postCategory" class="form-label">Category</label>
+                            <select class="form-select" id="postCategory" name="category" required>
+                                <option value="">Select a category</option>
+                                {% for category in categories %}
+                                <option value="{{ category.id }}">
+                                    {{ category.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div id="createPostError" class="alert alert-danger d-none"></div>
+
+                        <button type="submit" class="btn btn-primary">
+                            Create Post
+                        </button>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
 
 </div>
 

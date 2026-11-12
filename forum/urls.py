@@ -9,4 +9,5 @@ urlpatterns = [
         views.toggle_like,
         name="toggle_like"
     ),
+    path("api/posts/create/", views.create_post, name="create_post"),
 ]

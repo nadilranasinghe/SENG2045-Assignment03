@@ -1,20 +1,26 @@
 from django.shortcuts import render
-from .models import Post
+from .models import Post, Category
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.shortcuts import get_object_or_404
+from .forms import PostForm
+
 
 def home(request):
     posts = Post.objects.select_related(
         "author", "category"
     ).order_by("-created_at")
 
+    categories = Category.objects.all()
+
     context = {
-        "posts": posts
+        "posts": posts,
+        "categories": categories
     }
 
     return render(request, "home.html", context)
+
 
 def get_posts(request):
     try:
@@ -80,3 +86,24 @@ def toggle_like(request, post_id):
         "liked": liked,
         "likes_count": post.likes.count()
     })
+    
+@login_required
+@require_POST
+def create_post(request):
+    form = PostForm(request.POST)
+
+    if form.is_valid():
+        post = form.save(commit=False)
+        post.author = request.user
+        post.save()
+
+        return JsonResponse({
+            "success": True,
+            "post_id": post.id,
+            "message": "Post created successfully"
+        }, status=201)
+
+    return JsonResponse({
+        "success": False,
+        "errors": form.errors.get_json_data()
+    }, status=400)

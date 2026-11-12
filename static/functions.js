@@ -155,3 +155,94 @@ async function loadPosts() {
         isLoading = false;
     }
 }
+
+
+/**
+ * Handles AJAX submission of the Create Post modal.
+ * Validates the form through Django and refreshes the post list.
+ */
+document.addEventListener("DOMContentLoaded", () => {
+    const createPostForm = document.getElementById("createPostForm");
+    const createPostError = document.getElementById("createPostError");
+
+    if (!createPostForm) {
+        return;
+    }
+
+    createPostForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const submitButton = createPostForm.querySelector(
+            'button[type="submit"]'
+        );
+
+        const csrfToken = createPostForm.querySelector(
+            '[name="csrfmiddlewaretoken"]'
+        ).value;
+
+        createPostError.classList.add("d-none");
+        submitButton.disabled = true;
+
+        try {
+            const response = await fetch("/api/posts/create/", {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": csrfToken
+                },
+                body: new FormData(createPostForm),
+                credentials: "same-origin"
+            });
+
+            if (response.redirected) {
+                window.location.href = response.url;
+                return;
+            }
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                const errors = data.errors
+                    ? Object.values(data.errors)
+                        .flat()
+                        .map(error => error.message)
+                        .join(" ")
+                    : "Unable to create post.";
+
+                throw new Error(errors);
+            }
+
+            // Clear the form after successful submission.
+            createPostForm.reset();
+
+            // Close the Bootstrap modal.
+            const modalElement = document.getElementById(
+                "createPostModal"
+            );
+
+            const modal = bootstrap.Modal.getInstance(modalElement);
+
+            if (modal) {
+                modal.hide();
+            }
+
+
+            // Reset pagination and reload the first page using AJAX.
+            currentPage = 1;
+
+            const postsContainer = document.getElementById(
+                "posts-container"
+            );
+
+            postsContainer.replaceChildren();
+
+            // Load the updated posts without refreshing the browser.
+            await loadPosts();
+
+        } catch (error) {
+            createPostError.textContent = error.message;
+            createPostError.classList.remove("d-none");
+        } finally {
+            submitButton.disabled = false;
+        }
+    });
+});
