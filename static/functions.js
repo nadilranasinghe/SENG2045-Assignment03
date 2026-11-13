@@ -68,9 +68,19 @@ async function loadPosts() {
             content.className = "card-text";
             content.textContent = post.content;
 
+            // Create a clickable link to the author's profile.
+            // Create the author paragraph.
             const author = document.createElement("p");
-            author.className = "text-muted";
-            author.textContent = "Author: " + post.author;
+            author.className = "card-text text-muted";
+
+            // Create a clickable author profile link.
+            const authorLink = document.createElement("a");
+            authorLink.href = `/profile/${encodeURIComponent(post.author)}/`;
+            authorLink.textContent = post.author;
+            authorLink.className = "text-decoration-none";
+
+            // Add the author link to the paragraph.
+            author.append("Posted by: ", authorLink);
 
             const category = document.createElement("p");
             category.className = "text-muted";

@@ -2,8 +2,9 @@ from django.shortcuts import render
 from .models import Post, Category
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.views.decorators.http import require_POST
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from .forms import PostForm
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_image_file_extension
@@ -276,3 +277,29 @@ def upload_post_image(request, post_id):
         "image_url": post_image.image.url,
         "message": "Image uploaded successfully."
     }, status=201)
+
+@login_required
+def user_profile(request, username):
+    """
+    Display a user's public profile and forum activity.
+
+    Shows account information and posts created by the user.
+    """
+
+    # Find the requested user or return HTTP 404.
+    profile_user = get_object_or_404(User, username=username)
+
+    # Retrieve posts belonging to this user, newest first.
+    user_posts = Post.objects.filter(
+        author=profile_user
+    ).order_by("-created_at")
+
+    # Prepare data for the profile template.
+    context = {
+        "profile_user": profile_user,
+        "user_posts": user_posts,
+        "total_posts": user_posts.count(),
+        "is_own_profile": request.user == profile_user,
+    }
+
+    return render(request, "profile.html", context)

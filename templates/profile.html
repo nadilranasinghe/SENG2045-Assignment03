@@ -1,0 +1,89 @@
+
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <!-- User profile information -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+            <h2 class="card-title">
+                {{ profile_user.username }}'s Profile
+            </h2>
+
+            <hr>
+
+            <p>
+                <strong>Username:</strong>
+                {{ profile_user.username }}
+            </p>
+
+            <p>
+                <strong>Date Joined:</strong>
+                {{ profile_user.date_joined|date:"F d, Y" }}
+            </p>
+
+            <p>
+                <strong>Total Posts:</strong>
+                {{ total_posts }}
+            </p>
+
+            {% if is_own_profile %}
+                <span class="badge bg-primary">
+                    Your Profile
+                </span>
+            {% endif %}
+
+        </div>
+    </div>
+
+    <!-- Posts created by this user -->
+    <h3 class="mb-3">Forum Posts</h3>
+
+    <div class="row">
+
+        {% for post in user_posts %}
+
+            <div class="col-md-6 mb-3">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+
+                        <h5 class="card-title">
+                            <a href="{% url 'post_detail' post.id %}"
+                               class="text-decoration-none">
+                                {{ post.title }}
+                            </a>
+                        </h5>
+
+                        <p class="card-text">
+                            {{ post.content|truncatewords:30 }}
+                        </p>
+
+                        <p class="text-muted">
+                            <small>
+                                Posted on
+                                {{ post.created_at|date:"F d, Y" }}
+                            </small>
+                        </p>
+
+                    </div>
+                </div>
+            </div>
+
+        {% empty %}
+
+            <div class="col-12">
+                <div class="alert alert-info">
+                    This user hasn't created any posts yet.
+                </div>
+            </div>
+
+        {% endfor %}
+
+    </div>
+
+</div>
+
+{% endblock %}

@@ -16,6 +16,6 @@ urlpatterns = [
     path(
     "api/posts/<int:post_id>/upload-image/",
     views.upload_post_image,
-    name="upload_post_image"
-),
+    name="upload_post_image"),
+    path("profile/<str:username>/", views.user_profile, name="user_profile"),
 ]
