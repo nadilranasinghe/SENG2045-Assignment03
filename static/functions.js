@@ -146,32 +146,77 @@ async function loadPosts() {
 
 
             // Display uploaded images for this post.
+
+            // Display uploaded images using a Bootstrap carousel.
             if (post.images && post.images.length > 0) {
 
-                const imageContainer = document.createElement("div");
-                imageContainer.className = "d-flex flex-wrap gap-2 mt-3";
+                const carouselId = `postCarousel-${post.id}`;
 
-                post.images.forEach(function (image) {
+                // Create carousel container.
+                const carousel = document.createElement("div");
+                carousel.id = carouselId;
+                carousel.className = "carousel slide mt-3";
+                carousel.setAttribute("data-bs-interval", "false");
+
+                // Container for carousel slides.
+                const carouselInner = document.createElement("div");
+                carouselInner.className = "carousel-inner rounded";
+
+                post.images.forEach(function (image, index) {
+
+                    const item = document.createElement("div");
+                    item.className = index === 0
+                        ? "carousel-item active"
+                        : "carousel-item";
 
                     const img = document.createElement("img");
-
                     img.src = image.url;
-                    img.alt = "Uploaded image for " + post.title;
+                    img.alt = `Image ${index + 1} for ${post.title}`;
+                    img.className = "d-block w-100";
 
-                    img.className = "img-thumbnail";
+                    img.style.height = "300px";
+                    img.style.objectFit = "contain";
+                    img.style.objectPosition = "center";
+                    img.style.backgroundColor = "#e9ecef";
 
-                    img.style.width = "120px";
-                    img.style.height = "120px";
-                    img.style.objectFit = "cover";
-
-                    // Add the image to the container.
-                    imageContainer.appendChild(img);
+                    item.appendChild(img);
+                    carouselInner.appendChild(item);
                 });
 
-                // Add images to the post card.
-                body.appendChild(imageContainer);
-            }
+                carousel.appendChild(carouselInner);
 
+                // Add navigation buttons when multiple images exist.
+                if (post.images.length > 1) {
+
+                    const previousButton = document.createElement("button");
+                    previousButton.className = "carousel-control-prev";
+                    previousButton.style.backgroundColor = "rgba(0, 0, 0, 0.35)";
+                    previousButton.style.width = "45px";
+                    previousButton.type = "button";
+                    previousButton.setAttribute("data-bs-target", `#${carouselId}`);
+                    previousButton.setAttribute("data-bs-slide", "prev");
+                    previousButton.setAttribute("aria-label", "Previous image");
+                    previousButton.innerHTML =
+                        '<span class="carousel-control-prev-icon" aria-hidden="true"></span>';
+
+                    const nextButton = document.createElement("button");
+                    nextButton.className = "carousel-control-next";
+                    nextButton.style.backgroundColor = "rgba(0, 0, 0, 0.35)";
+                    nextButton.style.width = "45px";
+                    nextButton.type = "button";
+                    nextButton.setAttribute("data-bs-target", `#${carouselId}`);
+                    nextButton.setAttribute("data-bs-slide", "next");
+                    nextButton.setAttribute("aria-label", "Next image");
+                    nextButton.innerHTML =
+                        '<span class="carousel-control-next-icon" aria-hidden="true"></span>';
+
+                    carousel.appendChild(previousButton);
+                    carousel.appendChild(nextButton);
+                }
+
+                // Add carousel to the post card.
+                body.appendChild(carousel);
+            }
 
             // Create an Edit button for posts owned by the current user.
 
@@ -608,7 +653,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     return;
                 }
 
-                dz.processQueue();
+
             });
 
             // Set the correct post URL and CSRF token before each upload.
@@ -638,6 +683,39 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
             });
 
+
+            // Refresh posts after all selected images finish uploading.
+            dz.on("queuecomplete", async function () {
+
+                // Wait if any images are still queued or uploading.
+                if (dz.getQueuedFiles().length > 0 ||
+                    dz.getUploadingFiles().length > 0) {
+                    return;
+                }
+
+                // Check whether any images uploaded successfully.
+                const uploadedFiles = dz.getFilesWithStatus(Dropzone.SUCCESS);
+
+                if (uploadedFiles.length === 0) {
+                    return;
+                }
+
+                // Show success message.
+                uploadError.textContent = "Images uploaded successfully!";
+                uploadError.classList.remove("alert-danger", "d-none");
+                uploadError.classList.add("alert-success");
+
+                // Reload the latest posts and their images.
+                currentPage = 1;
+
+                document.getElementById("posts-container").replaceChildren();
+
+                await loadPosts();
+
+                console.log("Post list refreshed after image upload.");
+            });
+
+
             // Display upload errors.
             dz.on("error", function (file, errorMessage) {
 
@@ -648,6 +726,60 @@ document.addEventListener("DOMContentLoaded", function () {
                 uploadError.textContent = message;
                 uploadError.classList.remove("d-none");
             });
+
+            // Upload images when the Upload to Post button is clicked.
+            const uploadImagesButton = document.getElementById("uploadImagesButton");
+
+            uploadImagesButton.addEventListener("click", function () {
+
+                const postId = document.getElementById("uploadImagePostId").value;
+
+                // Check that a post has been selected.
+                if (!postId) {
+                    uploadError.textContent = "Please select a post first.";
+                    uploadError.classList.remove("d-none");
+                    return;
+                }
+
+                // Check that images have been selected.
+                // Check the status of the selected images.
+                console.log("Dropzone files:", dz.files.map(file => ({
+                    name: file.name,
+                    status: file.status
+                })));
+
+                console.log("Queued files:", dz.getQueuedFiles().length);
+
+                // Check that images have been selected.
+                if (dz.getQueuedFiles().length === 0) {
+
+                    const uploadedFiles = dz.getFilesWithStatus(Dropzone.SUCCESS);
+
+                    if (uploadedFiles.length > 0) {
+                        uploadError.textContent =
+                            "All selected images have already been uploaded successfully.";
+
+                        uploadError.classList.remove("alert-danger");
+                        uploadError.classList.add("alert-success");
+                    } else {
+                        uploadError.textContent = "Please select at least one image.";
+
+                        uploadError.classList.remove("alert-success");
+                        uploadError.classList.add("alert-danger");
+                    }
+
+                    uploadError.classList.remove("d-none");
+                    return;
+                }
+
+                // Clear previous errors.
+                uploadError.textContent = "";
+                uploadError.classList.add("d-none");
+
+                // Start uploading the selected images.
+                dz.processQueue();
+            });
+
         }
     });
 
