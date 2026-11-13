@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from .models import Post, Category
+from .models import Post, Category, Comment
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
@@ -303,3 +303,52 @@ def user_profile(request, username):
     }
 
     return render(request, "profile.html", context)
+
+@login_required
+@require_POST
+def create_comment(request, post_id):
+    """
+    Create a comment on a forum post using AJAX.
+    Only authenticated users can submit comments.
+    """
+
+    # Find the post or return HTTP 404.
+    post = get_object_or_404(Post, id=post_id)
+
+    # Retrieve and clean the submitted comment.
+    content = request.POST.get("content", "").strip()
+
+    # Reject empty comments.
+    if not content:
+        return JsonResponse({
+            "success": False,
+            "error": "Comment cannot be empty."
+        }, status=400)
+
+    # Restrict excessively long comments.
+    if len(content) > 2000:
+        return JsonResponse({
+            "success": False,
+            "error": "Comment cannot exceed 2000 characters."
+        }, status=400)
+
+    # Save the comment to the database.
+    comment = Comment.objects.create(
+        post=post,
+        author=request.user,
+        content=content
+    )
+
+    # Return the new comment to the frontend.
+    return JsonResponse({
+        "success": True,
+        "comment": {
+            "id": comment.id,
+            "author": comment.author.username,
+            "content": comment.content,
+            "created_at": comment.created_at.strftime(
+                "%Y-%m-%d %H:%M"
+            )
+        },
+        "message": "Comment added successfully."
+    }, status=201)

@@ -18,4 +18,5 @@ urlpatterns = [
     views.upload_post_image,
     name="upload_post_image"),
     path("profile/<str:username>/", views.user_profile, name="user_profile"),
+    path("api/posts/<int:post_id>/comments/", views.create_comment, name="create_comment"),
 ]
