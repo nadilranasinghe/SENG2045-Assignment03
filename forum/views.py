@@ -67,9 +67,7 @@ def get_posts(request):
             ),
             "category_id": post.category_id,
             "category": post.category.name,
-            "created_at": post.created_at.strftime(
-                "%Y-%m-%d %H:%M"
-            ),
+            "created_at": post.created_at.isoformat(),
             "likes_count": post.likes.count(),
             "liked": (
                 request.user.is_authenticated

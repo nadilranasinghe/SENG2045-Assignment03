@@ -86,13 +86,27 @@ async function loadPosts() {
             category.className = "text-muted";
             category.textContent = "Category: " + post.category;
 
+            // Display the post creation time in Ontario local time.
             const date = document.createElement("small");
             date.className = "text-muted";
-            date.textContent = post.created_at;
+
+            const postDate = new Date(post.created_at);
+
+            date.textContent = Number.isNaN(postDate.getTime())
+                ? post.created_at
+                : new Intl.DateTimeFormat("en-CA", {
+                    timeZone: "America/Toronto",
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                    hour: "numeric",
+                    minute: "2-digit",
+                    hour12: true
+                }).format(postDate);
 
             // Create Like/Unlike button
             const likeButton = document.createElement("button");
-            likeButton.className = "btn btn-outline-primary btn-sm mt-3";
+            likeButton.className = "btn btn-outline-primary btn-sm";
 
             function updateLikeButton(liked, count) {
                 likeButton.textContent =
@@ -145,13 +159,19 @@ async function loadPosts() {
                 }
             });
 
+            // Position the timestamp on the left and Like button on the right.
+            const postInfoRow = document.createElement("div");
+            postInfoRow.className =
+                "d-flex justify-content-between align-items-center gap-2 mt-3 mb-3";
+
+            postInfoRow.append(date, likeButton);
+
             body.append(
                 title,
                 content,
                 author,
                 category,
-                date,
-                likeButton
+                postInfoRow
             );
 
 
