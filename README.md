@@ -16,12 +16,14 @@ The application uses AJAX to update content dynamically without requiring a full
 
 ## Features
 
-- User authentication and login protection
+- User registration with Django's UserCreationForm
+- User login and logout
+- Authentication-aware navigation bar
+- User profile pages
 - Create, edit, and delete forum posts
 - Categories for organizing posts
 - AJAX post loading and pagination
 - AJAX Like/Unlike functionality
-- User profile pages
 - AJAX comments with validation
 - Multiple image uploads using Dropzone.js
 - Bootstrap image carousel
@@ -81,10 +83,41 @@ python manage.py migrate
 ```bash
 python manage.py runserver
 ```
-
 Open the application at:
 
 http://127.0.0.1:8000/
+
+
+## User Authentication
+
+The application supports user registration, login, and logout.
+
+### Register a New Account
+
+1. Open http://127.0.0.1:8000/
+2. Click **Register** in the navigation bar.
+3. Enter a username and password.
+4. Confirm the password and submit the form.
+5. Log in using the newly created account.
+
+### Login
+
+Click **Login** in the navigation bar or visit:
+
+http://127.0.0.1:8000/accounts/login/
+
+### Logout
+
+Click **Sign Out** in the navigation bar.
+
+### User Profiles
+
+Authenticated users can access their profiles through the **My Profile** button.
+
+Each user can create posts, upload images to their own posts, and interact with other users through likes and comments.
+
+Only the owner of a post can edit or delete it.
+
 
 ## Running Automated Tests
 
@@ -118,5 +151,3 @@ https://github.com/nadilranasinghe/SENG2045-Assignment03
 ## Notes
 
 The application uses SQLite for local development. Uploaded images are handled through Django's media configuration.
-
-The project is intended for educational purposes.
