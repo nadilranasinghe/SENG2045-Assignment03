@@ -1,0 +1,55 @@
+
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+
+            <div class="card shadow-sm">
+                <div class="card-body">
+
+                    <h3 class="card-title mb-4">User Login</h3>
+
+                    <!-- Display an error if login fails -->
+                    {% if form.errors %}
+                    <div class="alert alert-danger">
+                        Invalid username or password.
+                    </div>
+                    {% endif %}
+
+                    <!-- Login form -->
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <label for="id_username" class="form-label">
+                                Username
+                            </label>
+                            {{ form.username }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_password" class="form-label">
+                                Password
+                            </label>
+                            {{ form.password }}
+                        </div>
+
+                        <!-- Preserve the requested destination -->
+                        <input type="hidden" name="next" value="{{ next }}">
+
+                        <button type="submit" class="btn btn-primary">
+                            Login
+                        </button>
+                    </form>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from .models import Post, Category, Comment
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
@@ -9,6 +9,7 @@ from .forms import PostForm
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_image_file_extension
 from .models import PostImage
+from django.contrib.auth.forms import UserCreationForm
 
 
 def home(request):
@@ -350,3 +351,24 @@ def create_comment(request, post_id):
         },
         "message": "Comment added successfully."
     }, status=201)
+
+def register(request):
+    """
+    Allow new users to create a regular forum account.
+    """
+
+    if request.method == "POST":
+        form = UserCreationForm(request.POST)
+
+        if form.is_valid():
+            form.save()
+            return redirect("login")
+
+    else:
+        form = UserCreationForm()
+
+    return render(
+        request,
+        "registration/register.html",
+        {"form": form}
+    )

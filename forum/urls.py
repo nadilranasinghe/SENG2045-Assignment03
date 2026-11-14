@@ -1,5 +1,7 @@
 from django.urls import path
 from . import views
+from django.urls import include
+from forum import views
 
 urlpatterns = [
     path("", views.home, name="home"),
@@ -19,4 +21,7 @@ urlpatterns = [
     name="upload_post_image"),
     path("profile/<str:username>/", views.user_profile, name="user_profile"),
     path("api/posts/<int:post_id>/comments/", views.create_comment, name="create_comment"),
+    path("accounts/", include("django.contrib.auth.urls")),
+    path("accounts/register/", views.register, name="register"),
+    
 ]

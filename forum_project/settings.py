@@ -140,5 +140,12 @@ MEDIA_URL = "media/"
 # Directory where uploaded images will be stored.
 MEDIA_ROOT = BASE_DIR / "media"
 
+# Redirect users to the forum homepage after login.
+LOGIN_REDIRECT_URL = "/"
 
+# Redirect users to the homepage after logout.
+LOGOUT_REDIRECT_URL = "/"
+
+# Login page used for protected forum features.
+LOGIN_URL = "/accounts/login/"
 
